@@ -1,0 +1,22 @@
+syntax = "v1"
+
+info(
+	title: "allocation的自动生成服务"
+	desc: "自动测试allocation控制器的服务"
+	author: "aaron"
+	email: "blockchain_lyc@163.com"
+)
+
+service server-api {
+	@doc(
+		summary: "生成测试的CR数据"
+	)
+	@handler GenerateCRData
+	post /generate/data
+	
+	@doc(
+		summary: "清空所有的CR数据"
+	)
+	@handler CleanAll
+	post /clean/data
+}

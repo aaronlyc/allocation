@@ -1,0 +1,16 @@
+domain: aaron.domain
+layout:
+- go.kubebuilder.io/v3
+projectName: allocation
+repo: allocation
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: aaron.domain
+  group: myapp
+  kind: Allocation
+  path: allocation/api/v1
+  version: v1
+version: "3"

@@ -1,0 +1,12 @@
+apiVersion: myapp.aaron.domain/v1
+kind: Allocation
+metadata:
+  name: allocation-sample
+spec:
+  # Add fields here
+  image: busybox
+  replicas: 1
+  nodeName: worker1
+  msName: ms10
+  interval: 5
+  maxNum: 100
