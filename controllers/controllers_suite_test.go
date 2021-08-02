@@ -43,39 +43,58 @@ var _ = Describe("Testing with Ginkgo", func() {
 		ct.Finish() // 断言 DB.Get() 方法是否被调用
 	}, 10)
 
-	It("test get allocate", func() {
-		c.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj client.Object) error {
-			p := obj.(*myappv1.Allocation)
-			*p = *testConfig
+	Describe("test GetAllocate", func() {
 
-			return nil
+		It("test no error", func() {
+			c.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, _ client.ObjectKey, obj client.Object) error {
+				p := obj.(*myappv1.Allocation)
+				*p = *testConfig
+
+				return nil
+			})
+			testAllocate := &AllocationReconciler{
+				Log:    ctrl.Log,
+				Client: c,
+			}
+			allocate, err := testAllocate.GetAllocate(context.TODO(), types.NamespacedName{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(allocate.Name).To(Equal("test-allocate"))
 		})
-		testAllocate := &AllocationReconciler{
-			Log:    ctrl.Log,
-			Client: c,
-		}
-		allocate, err := testAllocate.GetAllocate(context.TODO(), types.NamespacedName{})
-		Expect(err).NotTo(HaveOccurred())
-		Expect(allocate.Name).To(Equal("test-allocate"))
+
+		It("test has error", func() {
+			testErr := fmt.Errorf("test has error")
+			c.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, _ client.ObjectKey, _ client.Object) error {
+				return testErr
+			})
+			testAllocate := &AllocationReconciler{
+				Log:    ctrl.Log,
+				Client: c,
+			}
+			_, err := testAllocate.GetAllocate(context.TODO(), types.NamespacedName{})
+			Expect(err).To(Equal(testErr))
+		})
 	})
 
-	It("test deal allocate", func() {
-		// create成功时
-		c.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-		testAllocate := &AllocationReconciler{
-			Log:    ctrl.Log,
-			Client: c,
-		}
-		err := testAllocate.dealAllocate(context.TODO(), testConfig)
-		Expect(err).NotTo(HaveOccurred())
+	Describe("test dealAllocate", func() {
+		It("test deal allocate", func() {
+			// create成功时
+			c.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+			testAllocate := &AllocationReconciler{
+				Log:    ctrl.Log,
+				Client: c,
+			}
+			err := testAllocate.dealAllocate(context.TODO(), testConfig)
+			Expect(err).NotTo(HaveOccurred())
 
-		// create失败时
-		c.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any()).Return(fmt.Errorf("处理失败"))
-		testAllocate2 := &AllocationReconciler{
-			Log:    ctrl.Log,
-			Client: c,
-		}
-		err = testAllocate2.dealAllocate(context.TODO(), testConfig)
-		Expect(err).To(HaveOccurred())
+			// create失败时
+			c.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any()).Return(fmt.Errorf("处理失败"))
+			testAllocate2 := &AllocationReconciler{
+				Log:    ctrl.Log,
+				Client: c,
+			}
+			err = testAllocate2.dealAllocate(context.TODO(), testConfig)
+			Expect(err).To(HaveOccurred())
+		})
 	})
+
 })

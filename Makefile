@@ -17,6 +17,8 @@ endif
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
+.PHONY: all build run fmt vet help test deploy
+
 all: build
 
 ##@ General
@@ -49,8 +51,8 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	go vet ./...
 
-test: manifests generate fmt vet ## Run tests.
-	go test ./... -coverprofile cover.out
+test: fmt vet ## Run tests.
+	go test ./controllers -coverprofile=cover.out && go tool cover -func=cover.out
 
 ##@ Build
 
@@ -81,12 +83,19 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
 
+ifeq (windows,$(shell go env GOOS))
+CONTROLLER_GEN = $(shell go env GOBIN)\\controller-gen   \
+KUSTOMIZE = $(shell go env GOBIN)\\kustomize  \
+echo $CONTROLLER_GEN \
+echo $KUSTOMIZE
+else
+CONTROLLER_GEN=$(shell go env GOBIN)/controller-gen  \
+KUSTOMIZE = $(shell go env GOBIN)/kustomize
+endif
 
-CONTROLLER_GEN = $(shell go env GOBIN)/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
 	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1)
 
-KUSTOMIZE = $(shell go env GOBIN)/kustomize
 kustomize: ## Download kustomize locally if necessary.
 	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
 
